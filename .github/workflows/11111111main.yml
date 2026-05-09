@@ -1,0 +1,42 @@
+name: Build APK (Release unsigned)
+
+on:
+  push:
+    branches:
+      - master
+      - rc
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target: [gh_gms]   # możesz rozszerzyć
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Load target env
+        run: |
+          export $(cat .github/workflows/targets/${{ matrix.target }}.env | xargs)
+
+      - name: Build APK (release unsigned)
+        run: |
+          ./gradlew :instances:android:app:assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ matrix.target }}
+          path: instances/android/app/build/outputs/apk/release/*.apk
