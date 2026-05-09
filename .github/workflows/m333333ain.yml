@@ -1,0 +1,37 @@
+name: Build APK (Internal)
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Load env (gh_gms example)
+        run: |
+          export $(cat .github/workflows/targets/gh_gms.env | xargs)
+
+      - name: Build APK
+        run: |
+          ./gradlew :instances:android:app:assembleInternal
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-internal
+          path: instances/android/app/build/outputs/apk/internal/*.apk
